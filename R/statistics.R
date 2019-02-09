@@ -176,7 +176,7 @@ SE.fun <- function(type, x) {
            n    <- length(x)
            se   <- 2 * SE.fun("SKEWNESSu", x) * sqrt( (n^2-1) / ((n-3)*(n+5)) )
            se
-         }
+         },
          stop("(SE) Please enter a valid summary statistics. See ?meanPlot for a list.")
   )
 
