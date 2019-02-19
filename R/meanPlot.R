@@ -121,7 +121,6 @@ meanPlot <- function(data=NULL, bsfactor=NULL, wsfactor=NULL, wslevels=NULL, mea
   if(popSize != Inf) {
     print("popSize Adjust")
     df.summary[grepl(errorBarContent[1], names(df.summary))] <- pop.adjust(df.summary, errorBarContent[1], popSize)
-    print(df.summary)
   }
 
   # Adjust for purpose.
@@ -130,8 +129,9 @@ meanPlot <- function(data=NULL, bsfactor=NULL, wsfactor=NULL, wslevels=NULL, mea
 
     print("Purpose Adjust")
     df.summary[grepl(errorBarContent[1], names(df.summary))] <- purpose(df.summary, errorBarContent[1])
-    print(df.summary)
   }
+
+  print(df.summary)
 
   # End of Adjustments
 
