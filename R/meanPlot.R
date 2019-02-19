@@ -33,6 +33,7 @@ meanPlot <- function(data=NULL, bsfactor=NULL, wsfactor=NULL, wslevels=NULL, mea
   # TODO(Felix): Plot styling
   # TODO(Felix): Add exception handling
 
+  suppressPackageStartupMessages()
 
   library(ICC)
   library(ggplot2)
@@ -110,17 +111,17 @@ meanPlot <- function(data=NULL, bsfactor=NULL, wsfactor=NULL, wslevels=NULL, mea
 
   # Adjustments start here ----------------
 
+
   # All manipulations to original data frame must be done before this. This includes IcC and decorrelation.
 
   # Adjust for population size. If population size is finite the SE should be adjusted to take into
   # account the population size.
 
+
   if(popSize != Inf) {
-
     print("popSize Adjust")
-    df.summary$se <- df.summary$se * sqrt(1 - df.summary$N/popSize)
+    df.summary[grepl(errorBarContent[1], names(df.summary))] <- pop.adjust(df.summary, errorBarContent[1], popSize)
     print(df.summary)
-
   }
 
   # Adjust for purpose.
@@ -128,9 +129,8 @@ meanPlot <- function(data=NULL, bsfactor=NULL, wsfactor=NULL, wslevels=NULL, mea
   if(purpose == "diff") {
 
     print("Purpose Adjust")
-    df.summary$se <- df.summary$se * sqrt(2)
+    df.summary[grepl(errorBarContent[1], names(df.summary))] <- purpose(df.summary, errorBarContent[1])
     print(df.summary)
-
   }
 
   # End of Adjustments
@@ -143,13 +143,13 @@ meanPlot <- function(data=NULL, bsfactor=NULL, wsfactor=NULL, wslevels=NULL, mea
   # Using SEM
 
   if(errorBarContent[1] == "SE") {
-    ggplot(df.summary, aes(x=4, y=mean, group=1)) +
-      geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=.1) +
+    ggplot(df.summary, aes_string(x=bsfactor, y="statistic")) +
+      geom_errorbar(aes(ymin=statistic-SE, ymax=statistic+SE), width=.1) +
       geom_line() +
       geom_point()
   } else {
-    ggplot(df.summary, aes(x=try, y=mean, group=1)) +
-      geom_errorbar(aes(ymin=ci1, ymax=ci2), width=.1) +
+    ggplot(df.summary, aes_string(x=bsfactor, y="statistic")) +
+      geom_errorbar(aes(ymin=CI1, ymax=CI2), width=.1) +
       geom_line() +
       geom_point()
   }
