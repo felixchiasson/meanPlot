@@ -1,19 +1,32 @@
-make.summary <- function(df, groupvars, stats, width, measure) {
+#' @title Summarize data
+#'
+#' @description Summarizes data using summary statistic of choice and returns a data frame sorted by group.
+#'
+#' @param df Data Frame
+#' @param groupvars Name of the column(s) containing your bsfactor and wsfactor
+#' @param stats Summary Statistic to use, see documentation for a list.
+#' @param width Type of error bar ("SE" or "CI")
+#' @param measure The name of the column containing your dependent variable
+#'
+#' @return data.frame
+#'
+#' @examples make_summary(ToothGrowth, groupvars = c("supp", "dose"), stats = "mean", width = "CI", measure = "len")
+
+make_summary <- function(df, groupvars, stats, width, measure) {
 
   wfct <- paste(width, stats, sep = ".")
-  df.summary <- ddply(df, groupvars,
+  df.summary <- plyr::ddply(df, groupvars,
                       .fun = function(xx, col) {
                         c(N = length(xx[[col]]),
                           statistic = do.call(stats, list(xx[[col]])),
                           error.bar = do.call(wfct, list(xx[[col]])))
-                      }, measure)
-
-  #df.summary <- rename(df.summary, c("statistic"=measure))
+                      }
+                      , measure)
 
   # Some renaming
 
   colnames(df.summary) <- sub("error.bar", width, colnames(df.summary))
-  df.summary[[1]] <- as.factor(df.summary[[1]])
+  df.summary[groupvars] <- lapply(df.summary[groupvars], as.factor)
 
   df.summary
 
@@ -25,11 +38,13 @@ make.summary <- function(df, groupvars, stats, width, measure) {
 ########################################################
 
 purpose <- function(x, width) {
-  (x[grepl(width, names(x))] - ifelse(width=="CI", x$statistic, 0)) * sqrt(2) + ifelse(width=="CI", x$statistic, 0)
+  (x[grepl(width, names(x))] - ifelse(width == "CI", x$statistic, 0)) *
+    sqrt(2) + ifelse(width == "CI", x$statistic, 0)
 }
 
 pop.adjust <- function(x, width, n) {
-  (x[grepl(width, names(x))] - ifelse(width=="CI", x$statistic, 0)) * sqrt(1 - x$N/n) + ifelse(width=="CI", x$statistic, 0)
+  (x[grepl(width, names(x))] - ifelse(width == "CI", x$statistic, 0)) *
+    sqrt(1 - x$N / n) + ifelse(width == "CI", x$statistic, 0)
 }
 
 
@@ -47,7 +62,7 @@ SE.mean <- function(x){
 CI.mean <- function(x, gamma = 0.95){
   se <- SE.mean(x)
   n  <- length(x)
-  tc <- qt( c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
+  tc <- qt(c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
   ci <- mean(x) + se * tc
   ci
 }
@@ -64,7 +79,7 @@ SE.median <- function(x){
 CI.median <- function(x, gamma = 0.95){
   se <- SE.median(x)
   n  <- length(x)
-  tc <- qt( c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
+  tc <- qt(c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
   ci <- median(x) + se * tc
   ci
 }
@@ -82,7 +97,7 @@ SE.hmean <- function(x){
 CI.hmean <- function(x, gamma = 0.95){
   se <- SE.hmean(x)
   n  <- length(x)
-  tc <- qt( c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
+  tc <- qt(c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
   ci <- hmean(x) + se * tc
   ci
 }
@@ -97,10 +112,10 @@ SE.gmean <- function(x){
   se   <- gm * sdlx / sqrt(n-1)
   se
 }
-CI.gmean <- function(x, gamma = 0.95){
+CI.gmean <- function(x, gamma = 0.95) {
   se <- SE.gmean(x)
   n  <- length(x)
-  tc <- qt( c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
+  tc <- qt(c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
   ci <- gmean(x) + se * tc
   ci
 }
@@ -121,7 +136,7 @@ SE.var <- function(x){
 CI.var <- function(x, gamma = 0.95){
   varx <- var(x)
   n    <- length(x)
-  c2c  <- qchisq( c(1/2+gamma/2, 1/2-gamma/2), n-1)
+  c2c  <- qchisq( c(1/2 + gamma/2, 1/2 - gamma/2), n-1)
   ci   <- varx * (n-1) / c2c
   ci
 }
@@ -137,7 +152,7 @@ SE.sd <- function(x){
 CI.sd <- function(x, gamma = 0.95){
   sdx <- sd(x)
   n   <- length(x)
-  c2c <- sqrt(qchisq( c(1/2+gamma/2, 1/2-gamma/2), n-1))
+  c2c <- sqrt(qchisq(c(1/2+gamma/2, 1/2-gamma/2), n-1))
   ci  <- sdx * sqrt(n-1) / c2c
   ci
 }
@@ -156,7 +171,7 @@ SE.mad <- function(x){
 CI.mad <- function(x, gamma = 0.95){
   se <- SE.mad(x)
   n  <- length(x)
-  tc <- qt( c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
+  tc <- qt(c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
   ci <- mad(x) + se * tc
   ci
 }
@@ -176,7 +191,7 @@ SE.IQR <- function(x){
 CI.IQR <- function(x, gamma = 0.95){
   se <- SE.IQR(x)
   n  <- length(x)
-  tc <- qt( c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
+  tc <- qt(c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
   ci <- IQR(x) + se * tc
   ci
 }
@@ -192,17 +207,17 @@ CI.IQR <- function(x, gamma = 0.95){
 sk <- function(x) {
   vrx <- var(x)
   n   <- length(x)
-  skbias <- (1/n) * (sum((x-mean(x))^3)) / ((n-1)/n * vrx)^(3/2)
-  sqrt(n*(n-1)) / (n-2) * skbias
+  skbias <- (1/n) * (sum((x - mean(x))^3)) / ((n-1)/n * vrx)^(3/2)
+  sqrt(n * (n-1)) / (n-2) * skbias
 }
 SE.sk <- function(x){
   n    <- length(x)
-  se   <- sqrt( (6 * n * (n-1)) / ((n-2)*(n+1)*(n+3)) )
+  se   <- sqrt( (6 * n * (n - 1)) / ((n - 2) * (n + 1)*(n + 3)) )
   se
 }
 CI.sk <- function(x, gamma = 0.95){
   se <- SE.sk(x)
-  zc <- qnorm( c(1/2 - gamma/2, 1/2 + gamma/2) )
+  zc <- qnorm(c(1/2 - gamma/2, 1/2 + gamma/2))
   ci <- sk(x) + se * zc
   ci
 }
@@ -213,17 +228,17 @@ CI.sk <- function(x, gamma = 0.95){
 # this is pearson skew
 pearsk <- function(x) {
   sdx <- sd(x)
-  (mean(x)-median(x)) / sdx
+  (mean(x) - median(x)) / sdx
 }
 SE.pearsk <- function(x){
   n    <- length(x)
-  se   <- sqrt( (pi/2 -1 ) / (n) )
+  se   <- sqrt( (pi/2 - 1) / n )
   se
 }
 CI.pearsk <- function(x, gamma = 0.95){
   se <- SE.pearsk(x)
   n  <- length(x)
-  tc <- qt( c(1/2 - gamma/2, 1/2 + gamma/2), n-1 )
+  tc <- qt(c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
   ci <- pearsk(x) + se * tc
   ci
 }
@@ -234,17 +249,17 @@ CI.pearsk <- function(x, gamma = 0.95){
 ku <- function(x) {
   vrx <- var(x)
   n   <- length(x)
-  kubias <- (1/n) * (sum((x-mean(x))^4)) / ((n-1)/n * vrx)^(4/2)
-  (n+1) / ((n-2)*(n-3)) * ( (n+1) * (kubias -3) +6)
+  kubias <- (1/n) * (sum((x - mean(x))^4)) / ((n - 1)/n * vrx)^(4/2)
+  (n+1) / ((n - 2) * (n - 3)) * ((n + 1) * (kubias - 3) + 6)
 }
 SE.ku <- function(x){
   n    <- length(x)
-  se   <- 2 * SE.sk(x) * sqrt( (n^2-1) / ((n-3)*(n+5)) )
+  se   <- 2 * SE.sk(x) * sqrt( (n^2 - 1) / ((n - 3) * (n + 5)) )
   se
 }
 CI.ku <- function(x, gamma = 0.95){
   n    <- length(x)
-  minbx <- 2 * (n-1) / (n-3)
+  minbx <- 2 * (n - 1) / (n - 3)
   se <- SE.ku(x)
   lnc <- qlnorm( c(1/2 - gamma/2, 1/2 + gamma/2) )
   ci <- ku(x) + 2 * lnc ^ (se / 2) - minbx

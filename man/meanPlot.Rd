@@ -4,36 +4,35 @@
 \alias{meanPlot}
 \title{Computes standard error and confidence interval of means under various designs and sampling schemes}
 \usage{
-meanPlot(data = NULL, bsfactor = NULL, wsfactor = NULL,
-  wslevels = NULL, measure, summaryStatistic = "mean",
-  errorBarContent = "SE", popSize = Inf, purpose = "single",
-  decorrelation = "none", sep = "_")
+meanPlot(data, bsfactor = NULL, wsfactor = NULL, wslevels = NULL,
+  measure, statistic = "mean", errorbar = "SE", popsize = Inf,
+  purpose = "single", decorrelation = "none", sep = "_")
 }
 \arguments{
 \item{data}{Data frame}
 
+\item{bsfactor}{The name of your between-subject factor(s)}
+
+\item{wsfactor}{The name of your within-subject factor(s)}
+
+\item{wslevels}{The number of levels in your within-subject factor (for repeated measures only)}
+
 \item{measure}{Your dependent variable}
 
-\item{errorBarContent}{The content of your error bar. Can either be "CI" or "SE". Defaults to "SE"}
+\item{errorbar}{The content of your error bar. Can either be "CI" or "SE". Defaults to "SE"}
 
-\item{popSize}{Size of the population under study if known. Defaults to Inf}
+\item{popsize}{Size of the population under study if known. Defaults to Inf}
 
 \item{purpose}{The purpose of the comparisons. Defaults to "single"}
 
 \item{decorrelation}{For repeated measure designs only. Chooses the decorrelation method ("CM" or "LM"). Defaults to "none".}
 
 \item{sep}{The separator used to separate dependent variables from within-subject factors in a wide data frame. Defaults to "_"}
-
-\item{betweenVar}{The name of your between-subject factor(s)}
-
-\item{withinVar}{The name of your within-subject factor(s)}
-
-\item{withinLevels}{The number of levels in your within-subject factor (for repeated measures only)}
 }
 \description{
 Computes standard error and confidence interval of means under various designs and sampling schemes
 }
 \examples{
-meanPlot(ToothGrowth, betweenVar = "supp", withinVar = "dose", measure = "len", summaryStatistic = 'mean')
+meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len", statistic = "mean")
 
 }
