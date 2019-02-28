@@ -13,18 +13,23 @@
 #' @param purpose The purpose of the comparisons. Defaults to "single"
 #' @param decorrelation For repeated measure designs only. Chooses the decorrelation method ("CM" or "LM"). Defaults to "none".
 #' @param sep The separator used to separate dependent variables from within-subject factors in a wide data frame. Defaults to "_"
+#' @param plot.type The type of object to plot on the graph. Can be either "bar" or "line".
+#' @param graph.params a list of ggplot2 parameters to input inside geoms (see ?geom_bar in ggplot2)
+#' @param error.params a list of ggplot2 parameters to input inside geom_errobar (see ?geom_errorbar in ggplot2)
 #'
 #' @return NULL
 #'
-#' @examples meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len", statistic = "mean")
+#' @examples
+#' meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len", statistic = "mean", xlab = xlab("Dose"), ylab = ylab("Tooth Growth"))
 #'
 #' @export meanPlot
 
 
-meanPlot <- function(data, bsfactor=NULL, wsfactor=NULL,
+meanPlot <- function(data, ..., bsfactor=NULL, wsfactor=NULL,
                      wslevels=NULL, measure, statistic = "mean",
                      errorbar = "SE", popsize = Inf, purpose = "single",
-                     decorrelation = "none", sep = "_") {
+                     decorrelation = "none", sep = "_", plot.type = "bar",
+                     error.params = list(width = .8), graph.params = list()) {
 
   # TODO(Felix): Replace summarySE for a more modular option
   # TODO(Felix): Better variable and data frame names
@@ -131,25 +136,27 @@ meanPlot <- function(data, bsfactor=NULL, wsfactor=NULL,
   # Using SEM
 
   if (errorbar[1] == "SE") {
-    ggplot2::ggplot(df.summary, ggplot2::aes_string(x = bsfactor,
-                                                    y = "statistic",
-                                                    fill = wsfactor)
-                    ) +
-      ggplot2::geom_bar(position = ggplot2::position_dodge(),
-                        stat = "identity") +
-      ggplot2::geom_errorbar(ggplot2::aes(ymin = statistic - SE,
-                                          ymax = statistic + SE),
-                             width = .2,
-                             position = ggplot2::position_dodge(.9))
+
+    make_plot(data = df.summary, type = plot.type,
+              x = bsfactor,
+              y = "statistic",
+              groups = ifelse(!is.null(wsfactor), wsfactor, NULL),
+              ymin = "statistic - SE",
+              ymax = "statistic + SE",
+              error.params = error.params,
+              graph.params = graph.params,
+              ...)
+
   } else {
-    ggplot2::ggplot(df.summary, ggplot2::aes_string(x = bsfactor,
-                                                    y = "statistic",
-                                                    colour = wsfactor)) +
-      ggplot2::geom_errorbar(ggplot2::aes(ymin = CI1, ymax = CI2),
-                             width = .1
-                             ) +
-      ggplot2::geom_line() +
-      ggplot2::geom_point()
+    make_plot(data = df.summary, type = plot.type,
+              x = bsfactor,
+              y = "statistic",
+              groups = ifelse(!is.null(wsfactor), wsfactor, NULL),
+              ymin = "statistic - CI1",
+              ymax = "statistic + CI2",
+              error.params = error.params,
+              graph.params = graph.params,
+              ...)
   }
 
 

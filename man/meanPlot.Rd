@@ -4,9 +4,11 @@
 \alias{meanPlot}
 \title{Computes standard error and confidence interval of means under various designs and sampling schemes}
 \usage{
-meanPlot(data, bsfactor = NULL, wsfactor = NULL, wslevels = NULL,
-  measure, statistic = "mean", errorbar = "SE", popsize = Inf,
-  purpose = "single", decorrelation = "none", sep = "_")
+meanPlot(data, ..., bsfactor = NULL, wsfactor = NULL,
+  wslevels = NULL, measure, statistic = "mean", errorbar = "SE",
+  popsize = Inf, purpose = "single", decorrelation = "none",
+  sep = "_", plot.type = "bar", error.params = list(width = 0.8),
+  graph.params = list())
 }
 \arguments{
 \item{data}{Data frame}
@@ -28,11 +30,17 @@ meanPlot(data, bsfactor = NULL, wsfactor = NULL, wslevels = NULL,
 \item{decorrelation}{For repeated measure designs only. Chooses the decorrelation method ("CM" or "LM"). Defaults to "none".}
 
 \item{sep}{The separator used to separate dependent variables from within-subject factors in a wide data frame. Defaults to "_"}
+
+\item{plot.type}{The type of object to plot on the graph. Can be either "bar" or "line".}
+
+\item{error.params}{a list of ggplot2 parameters to input inside geom_errobar (see ?geom_errorbar in ggplot2)}
+
+\item{graph.params}{a list of ggplot2 parameters to input inside geoms (see ?geom_bar in ggplot2)}
 }
 \description{
 Computes standard error and confidence interval of means under various designs and sampling schemes
 }
 \examples{
-meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len", statistic = "mean")
+meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len", statistic = "mean", xlab = xlab("Dose"), ylab = ylab("Tooth Growth"))
 
 }
