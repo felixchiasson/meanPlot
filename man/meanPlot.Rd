@@ -6,7 +6,7 @@
 \usage{
 meanPlot(data, ..., bsfactor = NULL, wsfactor = NULL,
   wslevels = NULL, measure, statistic = "mean", errorbar = "SE",
-  popsize = Inf, purpose = "single", decorrelation = "none",
+  gamma, popsize = Inf, purpose = "single", decorrelation = "none",
   sep = "_", plot.type = "bar", error.params = list(width = 0.8),
   graph.params = list())
 }

@@ -27,7 +27,7 @@
 
 meanPlot <- function(data, ..., bsfactor=NULL, wsfactor=NULL,
                      wslevels=NULL, measure, statistic = "mean",
-                     errorbar = "SE", popsize = Inf, purpose = "single",
+                     errorbar = "SE", gamma, popsize = Inf, purpose = "single",
                      decorrelation = "none", sep = "_", plot.type = "bar",
                      error.params = list(width = .8), graph.params = list()) {
 
@@ -97,7 +97,22 @@ meanPlot <- function(data, ..., bsfactor=NULL, wsfactor=NULL,
   # Start summary ----
   # Create a data frame with the necessary summary statistics
 
-  df.summary <- make_summary(df, groupvars, statistic, errorbar, measure)
+  if(missing(gamma)) {
+    df.summary <- make_summary(df = df,
+                               groupvars = groupvars,
+                               stats = statistic,
+                               width = errorbar,
+                               measure = measure)
+  } else {
+    df.summary <- make_summary(df = df,
+                               groupvars = groupvars,
+                               stats = statistic,
+                               width = errorbar,
+                               measure = measure,
+                               gamma)
+  }
+
+
 
 
   if (decorrelation == "LM") {

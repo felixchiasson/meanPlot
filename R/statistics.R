@@ -12,14 +12,14 @@
 #'
 #' @examples make_summary(ToothGrowth, groupvars = c("supp", "dose"), stats = "mean", width = "CI", measure = "len")
 
-make_summary <- function(df, groupvars, stats, width, measure) {
+make_summary <- function(df, groupvars, stats, width, measure, ...) {
 
   wfct <- paste(width, stats, sep = ".")
   df.summary <- plyr::ddply(df, groupvars,
                       .fun = function(xx, col) {
                         c(N = length(xx[[col]]),
                           statistic = do.call(stats, list(xx[[col]])),
-                          error.bar = do.call(wfct, list(xx[[col]])))
+                          error.bar = do.call(wfct, list(xx[[col]], ...)))
                       }
                       , measure)
 
