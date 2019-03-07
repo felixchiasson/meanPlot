@@ -32,6 +32,7 @@
 #' @examples
 #' meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len",
 #' x = "dose", group.by = "supp", statistic = "mean",
+#'
 #' xlab = xlab("Dose"), ylab = ylab("Tooth Growth"))
 #'
 #' @export meanPlot
@@ -52,6 +53,11 @@ meanPlot <- function(data, ...,
   # TODO(Felix): Add exception handling
 
   groupvars <- c(wsfactor, bsfactor)
+
+  if ((!is.null(wsfactor) && is.null(wslevels)) || (is.null(wsfactor) && !is.null(wslevels))) {
+    stop("ERROR: Did you forget to specify wslevels or your wsfactor?")
+  }
+
   wslevels <- sum(wslevels)
 
 
@@ -165,7 +171,12 @@ meanPlot <- function(data, ...,
   # Using SEM
 
   if (plot == TRUE) {
-    if (errorbar[1] == "SE") {
+
+    if (missing(x)) {
+      stop("ERROR: Argument x missing. Cannot continue.")
+    }
+
+    if (errorbar == "SE") {
 
       make_plot(data = df.summary, type = plot.type,
                 x = x,
@@ -177,7 +188,7 @@ meanPlot <- function(data, ...,
                 graph.params = graph.params,
                 ...)
 
-    } else {
+    } else if (errorbar == "CI") {
       make_plot(data = df.summary, type = plot.type,
                 x = x,
                 y = "statistic",
@@ -187,6 +198,8 @@ meanPlot <- function(data, ...,
                 error.params = error.params,
                 graph.params = graph.params,
                 ...)
+    } else {
+      stop("ERROR: errorbar must be 'CI' or 'SE'. Stopping.")
     }
   }
 
