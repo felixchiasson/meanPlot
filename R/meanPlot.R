@@ -6,39 +6,53 @@
 #' @param data Data frame
 #' @param bsfactor The name of your between-subject factor(s)
 #' @param wsfactor The name of your within-subject factor(s)
-#' @param wslevels The number of levels in your within-subject factor (for repeated measures only)
+#' @param x Only necessary if plot == TRUE. The name of the column containing
+#' your x.
+#' @param group.by Only necessary if plot == TRUE. The name of the column
+#' containing your grouping variable.
+#' @param wslevels The number of levels in your within-subject factor for all
+#' within subject factors. For multiple levels, list them in the same order as
+#' your wsfactor.
 #' @param measure Your dependent variable
-#' @param errorbar The content of your error bar. Can either be "CI" or "SE". Defaults to "SE"
+#' @param errorbar The content of your error bar. Can either be "CI" or "SE".
+#' Defaults to "SE"
+#' @param gamma Only necessary if errorbar == "CI". The confidence level.
 #' @param popsize Size of the population under study if known. Defaults to Inf
 #' @param purpose The purpose of the comparisons. Defaults to "single"
-#' @param decorrelation For repeated measure designs only. Chooses the decorrelation method ("CM" or "LM"). Defaults to "none".
+#' @param decorrelation For repeated measure designs only.
+#' Chooses the decorrelation method ("CM" or "LM"). Defaults to "none".
 #' @param sep The separator used to separate dependent variables from within-subject factors in a wide data frame. Defaults to "_"
-#' @param plot.type The type of object to plot on the graph. Can be either "bar" or "line".
+#' @param plot Defaults to TRUE. Set to FALSE if you do not want the output to be a plot.
+#' @param plot.type The type of object to plot on the graph. Can be either "bar" or "line". Defaults to "bar".
 #' @param graph.params a list of ggplot2 parameters to input inside geoms (see ?geom_bar in ggplot2)
 #' @param error.params a list of ggplot2 parameters to input inside geom_errobar (see ?geom_errorbar in ggplot2)
 #'
 #' @return NULL
 #'
 #' @examples
-#' meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len", statistic = "mean", xlab = xlab("Dose"), ylab = ylab("Tooth Growth"))
+#' meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len",
+#' x = "dose", group.by = "supp", statistic = "mean",
+#' xlab = xlab("Dose"), ylab = ylab("Tooth Growth"))
 #'
 #' @export meanPlot
 
 
-meanPlot <- function(data, ..., bsfactor=NULL, wsfactor=NULL,
-                     wslevels=NULL, measure, statistic = "mean",
-                     errorbar = "SE", gamma, popsize = Inf, purpose = "single",
-                     decorrelation = "none", sep = "_", plot.type = "bar",
+meanPlot <- function(data, ...,
+                     bsfactor=NULL, wsfactor=NULL,
+                     x, group.by, wslevels = NULL,
+                     measure, statistic = "mean",
+                     errorbar = "SE", gamma,
+                     popsize = Inf, purpose = "single",
+                     decorrelation = "none",
+                     sep = "_",
+                     plot = TRUE, plot.type = "bar",
                      error.params = list(width = .8), graph.params = list()) {
 
-  # TODO(Felix): Replace summarySE for a more modular option
-  # TODO(Felix): Better variable and data frame names
-  # TODO(Felix): Make it possible to choose variable name for graph
   # TODO(Felix): Adjustments for clusters, halved/pooled SEM.
-  # TODO(Felix): Plot styling
   # TODO(Felix): Add exception handling
 
   groupvars <- c(wsfactor, bsfactor)
+  wslevels <- sum(wslevels)
 
 
   # Decorrelate data ----
@@ -89,7 +103,7 @@ meanPlot <- function(data, ..., bsfactor=NULL, wsfactor=NULL,
     df <- lsr::wideToLong(df.wide, within = wsfactor, sep = sep)
 
   } else {
-    df <- data
+    df <- lsr::wideToLong(data, within = wsfactor, sep = sep)
   }
 
 
@@ -150,28 +164,30 @@ meanPlot <- function(data, ..., bsfactor=NULL, wsfactor=NULL,
 
   # Using SEM
 
-  if (errorbar[1] == "SE") {
+  if (plot == TRUE) {
+    if (errorbar[1] == "SE") {
 
-    make_plot(data = df.summary, type = plot.type,
-              x = bsfactor,
-              y = "statistic",
-              groups = ifelse(!is.null(wsfactor), wsfactor, NULL),
-              ymin = "statistic - SE",
-              ymax = "statistic + SE",
-              error.params = error.params,
-              graph.params = graph.params,
-              ...)
+      make_plot(data = df.summary, type = plot.type,
+                x = x,
+                y = "statistic",
+                groups = switch(!missing(group.by), group.by, NULL),
+                ymin = "statistic - SE",
+                ymax = "statistic + SE",
+                error.params = error.params,
+                graph.params = graph.params,
+                ...)
 
-  } else {
-    make_plot(data = df.summary, type = plot.type,
-              x = bsfactor,
-              y = "statistic",
-              groups = ifelse(!is.null(wsfactor), wsfactor, NULL),
-              ymin = "statistic - CI1",
-              ymax = "statistic + CI2",
-              error.params = error.params,
-              graph.params = graph.params,
-              ...)
+    } else {
+      make_plot(data = df.summary, type = plot.type,
+                x = x,
+                y = "statistic",
+                groups = switch(!missing(group.by), group.by, NULL),
+                ymin = "statistic - CI1",
+                ymax = "statistic + CI2",
+                error.params = error.params,
+                graph.params = graph.params,
+                ...)
+    }
   }
 
 
