@@ -7,8 +7,8 @@
 meanPlot(data, ..., bsfactor = NULL, wsfactor = NULL, x, group.by,
   wslevels = NULL, measure, statistic = "mean", errorbar = "SE",
   gamma, popsize = Inf, purpose = "single", decorrelation = "none",
-  sep = "_", plot = TRUE, plot.type = "bar",
-  error.params = list(width = 0.8), graph.params = list())
+  sep, plot = TRUE, plot.type = "bar", error.params = list(width =
+  0.8), graph.params = list())
 }
 \arguments{
 \item{data}{Data frame}
@@ -41,7 +41,9 @@ Defaults to "SE"}
 \item{decorrelation}{For repeated measure designs only.
 Chooses the decorrelation method ("CM" or "LM"). Defaults to "none".}
 
-\item{sep}{The separator used to separate dependent variables from within-subject factors in a wide data frame. Defaults to "_"}
+\item{sep}{The separator used to separate dependent variables from within-subject factors in a wide data frame.
+Only required for wide data frames where wsfactors are separated by a character. Can be skipped if you would like
+to have groups of within factors in your graph.}
 
 \item{plot}{Defaults to TRUE. Set to FALSE if you do not want the output to be a plot.}
 
@@ -57,6 +59,7 @@ Computes standard error and confidence interval of means under various designs a
 \examples{
 meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len",
 x = "dose", group.by = "supp", statistic = "mean",
-xlab = xlab("Dose"), ylab = ylab("Tooth Growth"))
+xlab = xlab("Dose"), ylab = ylab("Tooth Growth"),
+theme = theme_bw())
 
 }

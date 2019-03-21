@@ -21,7 +21,9 @@
 #' @param purpose The purpose of the comparisons. Defaults to "single"
 #' @param decorrelation For repeated measure designs only.
 #' Chooses the decorrelation method ("CM" or "LM"). Defaults to "none".
-#' @param sep The separator used to separate dependent variables from within-subject factors in a wide data frame. Defaults to "_"
+#' @param sep The separator used to separate dependent variables from within-subject factors in a wide data frame.
+#' Only required for wide data frames where wsfactors are separated by a character. Can be skipped if you would like
+#' to have groups of within factors in your graph.
 #' @param plot Defaults to TRUE. Set to FALSE if you do not want the output to be a plot.
 #' @param plot.type The type of object to plot on the graph. Can be either "bar" or "line". Defaults to "bar".
 #' @param graph.params a list of ggplot2 parameters to input inside geoms (see ?geom_bar in ggplot2)
@@ -32,8 +34,8 @@
 #' @examples
 #' meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len",
 #' x = "dose", group.by = "supp", statistic = "mean",
-#'
-#' xlab = xlab("Dose"), ylab = ylab("Tooth Growth"))
+#' xlab = xlab("Dose"), ylab = ylab("Tooth Growth"),
+#' theme = theme_bw())
 #'
 #' @export meanPlot
 
@@ -45,7 +47,7 @@ meanPlot <- function(data, ...,
                      errorbar = "SE", gamma,
                      popsize = Inf, purpose = "single",
                      decorrelation = "none",
-                     sep = "_",
+                     sep,
                      plot = TRUE, plot.type = "bar",
                      error.params = list(width = .8), graph.params = list()) {
 
@@ -54,9 +56,9 @@ meanPlot <- function(data, ...,
 
   groupvars <- c(wsfactor, bsfactor)
 
-  if ((!is.null(wsfactor) && is.null(wslevels)) || (is.null(wsfactor) && !is.null(wslevels))) {
-    stop("ERROR: Did you forget to specify wslevels or your wsfactor?")
-  }
+  # if ((!is.null(wsfactor) && is.null(wslevels)) || (is.null(wsfactor) && !is.null(wslevels))) {
+  #   stop("ERROR: Did you forget to specify wslevels or your wsfactor?")
+  # }
 
   wslevels <- sum(wslevels)
 
@@ -109,7 +111,11 @@ meanPlot <- function(data, ...,
     df <- lsr::wideToLong(df.wide, within = wsfactor, sep = sep)
 
   } else {
-    df <- lsr::wideToLong(data, within = wsfactor, sep = sep)
+    if (!is.null(wsfactor) && !missing(sep)) {
+      df <- lsr::wideToLong(data, within = wsfactor, sep = sep)
+    } else {
+      df <- data
+    }
   }
 
 
@@ -193,8 +199,8 @@ meanPlot <- function(data, ...,
                 x = x,
                 y = "statistic",
                 groups = switch(!missing(group.by), group.by, NULL),
-                ymin = "statistic - CI1",
-                ymax = "statistic + CI2",
+                ymin = "CI1",
+                ymax = "CI2",
                 error.params = error.params,
                 graph.params = graph.params,
                 ...)
