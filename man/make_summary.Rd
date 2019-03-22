@@ -4,7 +4,7 @@
 \alias{make_summary}
 \title{Summarize data}
 \usage{
-make_summary(df, groupvars, stats, width, measure)
+make_summary(df, groupvars, stats, width, measure, ...)
 }
 \arguments{
 \item{df}{Data Frame}

@@ -20,6 +20,7 @@ build_bar_graph <- function(graph.params = list(), error.params = list(), type) 
       graph.params)
     )
   } else {
+    # This doesn't work very well with factors.
     plot.type <- do.call(geom_point, modifyList(
       list(position = position_dodge(width = .9),
            stat = "identity",

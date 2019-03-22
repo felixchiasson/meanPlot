@@ -2,13 +2,13 @@
 % Please edit documentation in R/meanPlot.R
 \name{meanPlot}
 \alias{meanPlot}
-\title{Computes standard error and confidence interval of means under various designs and sampling schemes}
+\title{Computes standard error and confidence intervals under various designs and sampling schemes}
 \usage{
-meanPlot(data, ..., bsfactor = NULL, wsfactor = NULL,
+meanPlot(data, ..., bsfactor = NULL, wsfactor = NULL, x, group.by,
   wslevels = NULL, measure, statistic = "mean", errorbar = "SE",
-  popsize = Inf, purpose = "single", decorrelation = "none",
-  sep = "_", plot.type = "bar", error.params = list(width = 0.8),
-  graph.params = list())
+  gamma, popsize = Inf, purpose = "single", decorrelation = "none",
+  sep, plot = TRUE, plot.type = "bar", error.params = list(width =
+  0.8), graph.params = list())
 }
 \arguments{
 \item{data}{Data frame}
@@ -17,30 +17,49 @@ meanPlot(data, ..., bsfactor = NULL, wsfactor = NULL,
 
 \item{wsfactor}{The name of your within-subject factor(s)}
 
-\item{wslevels}{The number of levels in your within-subject factor (for repeated measures only)}
+\item{x}{Only necessary if plot == TRUE. The name of the column containing
+your x.}
+
+\item{group.by}{Only necessary if plot == TRUE. The name of the column
+containing your grouping variable.}
+
+\item{wslevels}{The number of levels in your within-subject factor for all
+within subject factors. For multiple levels, list them in the same order as
+your wsfactor.}
 
 \item{measure}{Your dependent variable}
 
-\item{errorbar}{The content of your error bar. Can either be "CI" or "SE". Defaults to "SE"}
+\item{errorbar}{The content of your error bar. Can either be "CI" or "SE".
+Defaults to "SE"}
+
+\item{gamma}{Only necessary if errorbar == "CI". The confidence level.}
 
 \item{popsize}{Size of the population under study if known. Defaults to Inf}
 
 \item{purpose}{The purpose of the comparisons. Defaults to "single"}
 
-\item{decorrelation}{For repeated measure designs only. Chooses the decorrelation method ("CM" or "LM"). Defaults to "none".}
+\item{decorrelation}{For repeated measure designs only.
+Chooses the decorrelation method ("CM" or "LM"). Defaults to "none".}
 
-\item{sep}{The separator used to separate dependent variables from within-subject factors in a wide data frame. Defaults to "_"}
+\item{sep}{The separator used to separate dependent variables from within-subject factors in a wide data frame.
+Only required for wide data frames where wsfactors are separated by a character. Can be skipped if you would like
+to have groups of within factors in your graph.}
 
-\item{plot.type}{The type of object to plot on the graph. Can be either "bar" or "line".}
+\item{plot}{Defaults to TRUE. Set to FALSE if you do not want the output to be a plot.}
+
+\item{plot.type}{The type of object to plot on the graph. Can be either "bar" or "line". Defaults to "bar".}
 
 \item{error.params}{a list of ggplot2 parameters to input inside geom_errobar (see ?geom_errorbar in ggplot2)}
 
 \item{graph.params}{a list of ggplot2 parameters to input inside geoms (see ?geom_bar in ggplot2)}
 }
 \description{
-Computes standard error and confidence interval of means under various designs and sampling schemes
+Computes standard error and confidence interval under various designs and sampling schemes
 }
 \examples{
-meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len", statistic = "mean", xlab = xlab("Dose"), ylab = ylab("Tooth Growth"))
+meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len",
+x = "dose", group.by = "supp", statistic = "mean",
+xlab = xlab("Dose"), ylab = ylab("Tooth Growth"),
+theme = theme_bw())
 
 }
