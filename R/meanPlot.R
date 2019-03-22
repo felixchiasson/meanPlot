@@ -165,8 +165,7 @@ meanPlot <- function(data, ...,
       purpose(df.summary, errorbar[1])
   }
 
-  print(df.summary)
-
+  print("df.summary")
   # End of Adjustments
 
 
@@ -209,6 +208,8 @@ meanPlot <- function(data, ...,
     } else {
       stop("ERROR: errorbar must be 'CI' or 'SE'. Stopping.")
     }
+  } else {
+    return(df.summary)
   }
 
 
