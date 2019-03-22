@@ -2,7 +2,7 @@
 % Please edit documentation in R/meanPlot.R
 \name{meanPlot}
 \alias{meanPlot}
-\title{Computes standard error and confidence interval of means under various designs and sampling schemes}
+\title{Computes standard error and confidence intervals under various designs and sampling schemes}
 \usage{
 meanPlot(data, ..., bsfactor = NULL, wsfactor = NULL, x, group.by,
   wslevels = NULL, measure, statistic = "mean", errorbar = "SE",
@@ -54,7 +54,7 @@ to have groups of within factors in your graph.}
 \item{graph.params}{a list of ggplot2 parameters to input inside geoms (see ?geom_bar in ggplot2)}
 }
 \description{
-Computes standard error and confidence interval of means under various designs and sampling schemes
+Computes standard error and confidence interval under various designs and sampling schemes
 }
 \examples{
 meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len",

@@ -1,7 +1,7 @@
 #' @importFrom magrittr %>%
-#' @title Computes standard error and confidence interval of means under various designs and sampling schemes
+#' @title Computes standard error and confidence intervals under various designs and sampling schemes
 #'
-#' @description Computes standard error and confidence interval of means under various designs and sampling schemes
+#' @description Computes standard error and confidence interval under various designs and sampling schemes
 #'
 #' @param data Data frame
 #' @param bsfactor The name of your between-subject factor(s)
@@ -159,7 +159,7 @@ meanPlot <- function(data, ...,
 
   # Adjust for purpose.
 
-  if (purpose == "diff") {
+  if (purpose == "diff" || decorrelation == "none") {
     print("Purpose Adjust")
     df.summary[grepl(errorbar[1], names(df.summary))] <-
       purpose(df.summary, errorbar[1])
@@ -177,6 +177,8 @@ meanPlot <- function(data, ...,
   # Using SEM
 
   if (plot == TRUE) {
+
+    require(ggplot2)
 
     if (missing(x)) {
       stop("ERROR: Argument x missing. Cannot continue.")
