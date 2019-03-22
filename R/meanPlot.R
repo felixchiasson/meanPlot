@@ -159,7 +159,7 @@ meanPlot <- function(data, ...,
 
   # Adjust for purpose.
 
-  if (purpose == "diff" || decorrelation == "none") {
+  if (purpose == "diff" || decorrelation != "none") {
     print("Purpose Adjust")
     df.summary[grepl(errorbar[1], names(df.summary))] <-
       purpose(df.summary, errorbar[1])

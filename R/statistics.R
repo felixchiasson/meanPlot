@@ -38,8 +38,6 @@ make_summary <- function(df, groupvars, stats, width, measure, ...) {
 ########################################################
 
 purpose <- function(x, width) {
-  print(x[grepl(width, names(x))])
-  print(ifelse(width == "CI", x["statistic"], 0))
   (x[grepl(width, names(x))] - ifelse(width == "CI", x["statistic"], 0)) *
     sqrt(2) + ifelse(width == "CI", x["statistic"], 0)
 }
