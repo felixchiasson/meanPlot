@@ -4,7 +4,7 @@
 \alias{meanPlot}
 \title{Computes standard error and confidence intervals under various designs and sampling schemes}
 \usage{
-meanPlot(data, ..., bsfactor = NULL, wsfactor = NULL, x, group.by,
+meanPlot(data, ..., bsfactor = NULL, wsfactor = NULL, factorOrder,
   wslevels = NULL, measure, statistic = "mean", errorbar = "SE",
   gamma, popsize = Inf, purpose = "single", decorrelation = "none",
   sep, plot = TRUE, plot.type = "bar", error.params = list(width =
@@ -16,12 +16,6 @@ meanPlot(data, ..., bsfactor = NULL, wsfactor = NULL, x, group.by,
 \item{bsfactor}{The name of your between-subject factor(s)}
 
 \item{wsfactor}{The name of your within-subject factor(s)}
-
-\item{x}{Only necessary if plot == TRUE. The name of the column containing
-your x.}
-
-\item{group.by}{Only necessary if plot == TRUE. The name of the column
-containing your grouping variable.}
 
 \item{wslevels}{The number of levels in your within-subject factor for all
 within subject factors. For multiple levels, list them in the same order as
@@ -52,13 +46,19 @@ to have groups of within factors in your graph.}
 \item{error.params}{a list of ggplot2 parameters to input inside geom_errobar (see ?geom_errorbar in ggplot2)}
 
 \item{graph.params}{a list of ggplot2 parameters to input inside geoms (see ?geom_bar in ggplot2)}
+
+\item{x}{Only necessary if plot == TRUE. The name of the column containing
+your x.}
+
+\item{group.by}{Only necessary if plot == TRUE. The name of the column
+containing your grouping variable.}
 }
 \description{
 Computes standard error and confidence interval under various designs and sampling schemes
 }
 \examples{
-meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len",
-x = "dose", group.by = "supp", statistic = "mean",
+meanPlot(ToothGrowth, bsfactor = c("dose", "supp"), measure = "len",
+statistic = "mean",
 xlab = xlab("Dose"), ylab = ylab("Tooth Growth"),
 theme = theme_bw())
 

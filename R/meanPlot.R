@@ -32,8 +32,8 @@
 #' @return NULL
 #'
 #' @examples
-#' meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len",
-#' x = "dose", group.by = "supp", statistic = "mean",
+#' meanPlot(ToothGrowth, bsfactor = c("dose", "supp"), measure = "len",
+#' statistic = "mean",
 #' xlab = xlab("Dose"), ylab = ylab("Tooth Growth"),
 #' theme = theme_bw())
 #'
@@ -42,7 +42,7 @@
 
 meanPlot <- function(data, ...,
                      bsfactor=NULL, wsfactor=NULL,
-                     x, group.by, wslevels = NULL,
+                     factorOrder, wslevels = NULL,
                      measure, statistic = "mean",
                      errorbar = "SE", gamma,
                      popsize = Inf, purpose = "single",
@@ -54,7 +54,14 @@ meanPlot <- function(data, ...,
   # TODO(Felix): Adjustments for clusters, halved/pooled SEM.
   # TODO(Felix): Add exception handling
 
-  groupvars <- c(wsfactor, bsfactor)
+  if(!missing(factorOrder)) {
+    groupvars <- factorOrder
+  } else {
+    groupvars <- c(wsfactor, bsfactor)
+  }
+
+
+
 
   # if ((!is.null(wsfactor) && is.null(wslevels)) || (is.null(wsfactor) && !is.null(wslevels))) {
   #   stop("ERROR: Did you forget to specify wslevels or your wsfactor?")
@@ -165,7 +172,7 @@ meanPlot <- function(data, ...,
       purpose(df.summary, errorbar[1])
   }
 
-  print("df.summary")
+  print(df.summary)
   # End of Adjustments
 
 
@@ -179,16 +186,12 @@ meanPlot <- function(data, ...,
 
     require(ggplot2)
 
-    if (missing(x)) {
-      stop("ERROR: Argument x missing. Cannot continue.")
-    }
-
     if (errorbar == "SE") {
 
       make_plot(data = df.summary, type = plot.type,
-                x = x,
+                x = groupvars[1],
                 y = "statistic",
-                groups = switch(!missing(group.by), group.by, NULL),
+                groups = switch(!is.na(groupvars[2]), groupvars[2], NULL),
                 ymin = "statistic - SE",
                 ymax = "statistic + SE",
                 error.params = error.params,
@@ -197,9 +200,9 @@ meanPlot <- function(data, ...,
 
     } else if (errorbar == "CI") {
       make_plot(data = df.summary, type = plot.type,
-                x = x,
+                x = groupvars[1],
                 y = "statistic",
-                groups = switch(!missing(group.by), group.by, NULL),
+                groups = switch(!is.na(groupvars[2]), groupvars[2], NULL),
                 ymin = "CI1",
                 ymax = "CI2",
                 error.params = error.params,
