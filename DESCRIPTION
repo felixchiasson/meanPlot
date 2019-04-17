@@ -4,9 +4,9 @@ Title: Computes standard error and confidence interval of means under various de
 Version: 0.1.0
 Authors@R: c(
             person("Felix", "Chiasson", email = "felix@chiasson.co",
-                    role = c("aut", "cre")),
+                    role = c("aut")),
             person("Denis", "Cousineau", email = "denis.cousineau@uottawa.ca",
-                    role = "ctb"))
+                    role = c("aut", "cre")))
 Description: Computes standard error and confidence interval of means under various designs and sampling schemes
 License: GNU
 Encoding: UTF-8

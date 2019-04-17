@@ -1,4 +1,3 @@
-#' @importFrom magrittr %>%
 #' @title Computes standard error and confidence intervals under various designs and sampling schemes
 #'
 #' @description Computes standard error and confidence interval under various designs and sampling schemes
@@ -6,19 +5,14 @@
 #' @param data Data frame
 #' @param bsfactor The name of your between-subject factor(s)
 #' @param wsfactor The name of your within-subject factor(s)
-#' @param x Only necessary if plot == TRUE. The name of the column containing
-#' your x.
-#' @param group.by Only necessary if plot == TRUE. The name of the column
-#' containing your grouping variable.
-#' @param wslevels The number of levels in your within-subject factor for all
-#' within subject factors. For multiple levels, list them in the same order as
-#' your wsfactor.
+#' @param factorOrder Order of factors as shown in the graph (x axis, groups, panels)
 #' @param measure Your dependent variable
 #' @param errorbar The content of your error bar. Can either be "CI" or "SE".
 #' Defaults to "SE"
 #' @param gamma Only necessary if errorbar == "CI". The confidence level.
+#' @param adjustments List of adjustments as described below
 #' @param popsize Size of the population under study if known. Defaults to Inf
-#' @param purpose The purpose of the comparisons. Defaults to "single"
+#' @param purpose The purpose of the comparisons. Defaults to "single". Options: single, difference
 #' @param decorrelation For repeated measure designs only.
 #' Chooses the decorrelation method ("CM" or "LM"). Defaults to "none".
 #' @param sep The separator used to separate dependent variables from within-subject factors in a wide data frame.
@@ -42,11 +36,11 @@
 
 meanPlot <- function(data, ...,
                      bsfactor=NULL, wsfactor=NULL,
-                     factorOrder, wslevels = NULL,
-                     measure, statistic = "mean",
+                     factorOrder, measure,
+                     statistic = "mean",
                      errorbar = "SE", gamma,
-                     popsize = Inf, purpose = "single",
-                     decorrelation = "none",
+                     adjustments = list(purpose = "single", popsize = Inf,
+                                        decorrelation = "none"),
                      sep,
                      plot = TRUE, plot.type = "bar",
                      error.params = list(width = .8), graph.params = list()) {
@@ -54,20 +48,33 @@ meanPlot <- function(data, ...,
   # TODO(Felix): Adjustments for clusters, halved/pooled SEM.
   # TODO(Felix): Add exception handling
 
+  # Set defaults if they are missing ####
+
+  if(is.null(adjustments$purpose)) {
+    adjustments$purpose <- "single"
+  }
+
+  if(is.null(adjustments$popsize)) {
+    adjustments$popsize <- Inf
+  }
+
+  if(is.null(adjustments$decorrelation)) {
+    adjustments$decorrelation <- "none"
+  }
+
   if(!missing(factorOrder)) {
     groupvars <- factorOrder
   } else {
     groupvars <- c(wsfactor, bsfactor)
   }
 
-
-
+  ########################################
 
   # if ((!is.null(wsfactor) && is.null(wslevels)) || (is.null(wsfactor) && !is.null(wslevels))) {
   #   stop("ERROR: Did you forget to specify wslevels or your wsfactor?")
   # }
 
-  wslevels <- sum(wslevels)
+  wslevels <- length(grep(x = colnames(data), pattern = paste0("^", measure)))
 
 
   # Decorrelate data ----
@@ -82,7 +89,7 @@ meanPlot <- function(data, ...,
     df.z <-
       (sqrt(ncol(df.x) / (ncol(df.x) - 1))) *
       (t(df.y) - colMeans(df.y)) + colMeans(df.y)
-    df.z <- t(df.z) %>% as.data.frame()
+    df.z <- as.data.frame(t(df.z))
     return(df.z)
   }
 
@@ -90,10 +97,10 @@ meanPlot <- function(data, ...,
   # We use delim() to only select the data we need knowing the number of levels
   # in our repeated measures.
 
-  if (decorrelation %in% c("CM", "LM")) {
+  if (adjustments$decorrelation == "CM" || adjustments$decorrelation == "LM") {
 
     if (!is.null(bsfactor)) {
-      df.wide <- data %>% split(data[[bsfactor]])
+      df.wide <- split(data, data[[bsfactor]])
       print("IT IS NOT NULL")
 
       for (i in 1:length(df.wide)) {
@@ -148,7 +155,7 @@ meanPlot <- function(data, ...,
 
 
 
-  if (decorrelation == "LM") {
+  if (adjustments$decorrelation == "LM") {
     df.summary$SE <- (1 / wslevels) * (df.summary$SE^2)
   }
 
@@ -158,15 +165,15 @@ meanPlot <- function(data, ...,
   # adjusted to take into account the population size.
 
 
-  if (popsize != Inf) {
+  if (adjustments$popsize != Inf) {
     print("popSize Adjust")
     df.summary[grepl(errorbar[1], names(df.summary))] <-
-      pop.adjust(df.summary, errorbar[1], popsize)
+      pop.adjust(df.summary, errorbar[1], adj$popsize)
   }
 
   # Adjust for purpose.
 
-  if (purpose == "diff" || decorrelation != "none") {
+  if (adjustments$purpose == "difference") {
     print("Purpose Adjust")
     df.summary[grepl(errorbar[1], names(df.summary))] <-
       purpose(df.summary, errorbar[1])
@@ -180,37 +187,46 @@ meanPlot <- function(data, ...,
   # For this section we make use of the ggplot package. For each group, we plot
   # TODO: We need a case for grouping for between factors
 
-  # Using SEM
 
   if (plot == TRUE) {
 
     require(ggplot2)
 
-    if (errorbar == "SE") {
+    if (is.null(df.summary$error2)) {
 
-      make_plot(data = df.summary, type = plot.type,
-                x = groupvars[1],
-                y = "statistic",
-                groups = switch(!is.na(groupvars[2]), groupvars[2], NULL),
-                ymin = "statistic - SE",
-                ymax = "statistic + SE",
-                error.params = error.params,
-                graph.params = graph.params,
-                ...)
+      plot <- make_plot(data = df.summary, type = plot.type,
+                        x = groupvars[1],
+                        y = "statistic",
+                        groups = switch(!is.na(groupvars[2]), groupvars[2], NULL),
+                        ymin = "statistic - error",
+                        ymax = "statistic + error",
+                        error.params = error.params,
+                        graph.params = graph.params,
+                        ...)
+      if(!is.na(groupvars[3])) {
+        plot + facet_wrap(df.summary[[groupvars[3]]] ~ .)
+      } else {
+        plot
+      }
 
-    } else if (errorbar == "CI") {
-      make_plot(data = df.summary, type = plot.type,
-                x = groupvars[1],
-                y = "statistic",
-                groups = switch(!is.na(groupvars[2]), groupvars[2], NULL),
-                ymin = "CI1",
-                ymax = "CI2",
-                error.params = error.params,
-                graph.params = graph.params,
-                ...)
     } else {
-      stop("ERROR: errorbar must be 'CI' or 'SE'. Stopping.")
+      plot <- make_plot(data = df.summary, type = plot.type,
+                        x = groupvars[1],
+                        y = "statistic",
+                        groups = switch(!is.na(groupvars[2]), groupvars[2], NULL),
+                        ymin = "error1",
+                        ymax = "error2",
+                        error.params = error.params,
+                        graph.params = graph.params,
+                        ...)
+      if(!is.na(groupvars[3])) {
+        plot + facet_wrap(df.summary[[groupvars[3]]] ~ .)
+      } else {
+        plot
+      }
+
     }
+
   } else {
     return(df.summary)
   }
