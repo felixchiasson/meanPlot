@@ -96,34 +96,37 @@ meanPlot <- function(data, ...,
   # We want to do this step for each group and only on columns with measures.
   # We use delim() to only select the data we need knowing the number of levels
   # in our repeated measures.
+  if (adjustments$decorrelation != "none") {
+    if (adjustments$decorrelation == "CM" || adjustments$decorrelation == "LM") {
 
-  if (adjustments$decorrelation == "CM" || adjustments$decorrelation == "LM") {
+      if (!is.null(bsfactor)) {
+        df.wide <- split(data, data[[bsfactor]])
+        print("IT IS NOT NULL")
 
-    if (!is.null(bsfactor)) {
-      df.wide <- split(data, data[[bsfactor]])
-      print("IT IS NOT NULL")
+        for (i in 1:length(df.wide)) {
 
-      for (i in 1:length(df.wide)) {
+          df.part <- two_step_normalize(df.wide[[i]], wslevels)
+          delim   <- select_col(df.wide[[i]], wslevels)
+          df.wide[[i]][, delim:ncol(df.wide[[i]])] <- df.part
 
-        df.part <- two_step_normalize(df.wide[[i]], wslevels)
-        delim   <- select_col(df.wide[[i]], wslevels)
-        df.wide[[i]][, delim:ncol(df.wide[[i]])] <- df.part
+        }
+        # Once decorrelation is over, we merge both data frames together again.
+        df.wide <- unsplit(df.wide, as.factor(data[[bsfactor]]))
+
+      } else {
+        df.wide <- data
+
+        df.part <- two_step_normalize(df.wide, wslevels)
+        delim   <- select_col(data, wslevels)
+        df.wide[, delim:ncol(data)] <- df.part
 
       }
-      # Once decorrelation is over, we merge both data frames together again.
-      df.wide <- unsplit(df.wide, as.factor(data[[bsfactor]]))
+
+      df <- lsr::wideToLong(df.wide, within = wsfactor, sep = sep)
 
     } else {
-      df.wide <- data
-
-      df.part <- two_step_normalize(df.wide, wslevels)
-      delim   <- select_col(data, wslevels)
-      df.wide[, delim:ncol(data)] <- df.part
-
+      stop("Invalid decorrelation adjustment. Try 'none', 'CM', or 'LM'.")
     }
-
-    df <- lsr::wideToLong(df.wide, within = wsfactor, sep = sep)
-
   } else {
     if (!is.null(wsfactor) && !missing(sep)) {
       df <- lsr::wideToLong(data, within = wsfactor, sep = sep)
@@ -164,19 +167,23 @@ meanPlot <- function(data, ...,
   # Adjust for population size. If population size is finite the SE should be
   # adjusted to take into account the population size.
 
-
-  if (adjustments$popsize != Inf) {
+  if (is.character(adjustments$popsize)) {
+    stop("ERROR: popsize should be a number")
+  } else if (adjustments$popsize != Inf) {
     print("popSize Adjust")
-    df.summary[grepl(errorbar[1], names(df.summary))] <-
-      pop.adjust(df.summary, errorbar[1], adj$popsize)
+    df.summary[grepl("error", names(df.summary))] <-
+      pop.adjust(df.summary, errorbar, adjustments$popsize)
   }
 
   # Adjust for purpose.
-
-  if (adjustments$purpose == "difference") {
-    print("Purpose Adjust")
-    df.summary[grepl(errorbar[1], names(df.summary))] <-
-      purpose(df.summary, errorbar[1])
+  if (adjustments$purpose != "single") {
+    if (adjustments$purpose == "difference") {
+      print("Purpose Adjust")
+      df.summary[grepl("error", names(df.summary))] <-
+        purpose(df.summary, errorbar)
+    } else {
+      stop("Invalid purpose adjustment. Did you mean to write 'difference'?")
+    }
   }
 
   print(df.summary)
