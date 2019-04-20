@@ -211,9 +211,9 @@ meanPlot <- function(data, ...,
                         graph.params = graph.params,
                         ...)
       if(!is.na(groupvars[4])) {
-        plot + facet_wrap(df.summary[[groupvars[3]]] ~ df.summary[[groupvars[4]]])
+        plot + facet_grid(df.summary[[groupvars[3]]] ~ df.summary[[groupvars[4]]])
       } else if (!is.na(groupvars[3])) {
-        plot + facet_wrap(df.summary[[groupvars[3]]] ~ .)
+        plot + facet_grid(df.summary[[groupvars[3]]] ~ .)
       } else {
         plot
       }
@@ -229,9 +229,9 @@ meanPlot <- function(data, ...,
                         graph.params = graph.params,
                         ...)
       if(!is.na(groupvars[4])) {
-        plot + facet_wrap(df.summary[[groupvars[3]]] ~ df.summary[[groupvars[4]]])
+        plot + facet_grid(df.summary[[groupvars[3]]] ~ df.summary[[groupvars[4]]])
       } else if (!is.na(groupvars[3])) {
-        plot + facet_wrap(df.summary[[groupvars[3]]] ~ .)
+        plot + facet_grid(df.summary[[groupvars[3]]] ~ .)
       } else {
         plot
       }
