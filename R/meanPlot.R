@@ -70,9 +70,9 @@ meanPlot <- function(data, ...,
 
   ########################################
 
-  # if ((!is.null(wsfactor) && is.null(wslevels)) || (is.null(wsfactor) && !is.null(wslevels))) {
-  #   stop("ERROR: Did you forget to specify wslevels or your wsfactor?")
-  # }
+  if (length(groupvars) > 4) {
+    stop("Too many factors. There can only be a total of 4 factors.")
+  }
 
   wslevels <- length(grep(x = colnames(data), pattern = paste0("^", measure)))
 
@@ -210,7 +210,9 @@ meanPlot <- function(data, ...,
                         error.params = error.params,
                         graph.params = graph.params,
                         ...)
-      if(!is.na(groupvars[3])) {
+      if(!is.na(groupvars[4])) {
+        plot + facet_wrap(df.summary[[groupvars[3]]] ~ df.summary[[groupvars[4]]])
+      } else if (!is.na(groupvars[3])) {
         plot + facet_wrap(df.summary[[groupvars[3]]] ~ .)
       } else {
         plot
@@ -226,7 +228,9 @@ meanPlot <- function(data, ...,
                         error.params = error.params,
                         graph.params = graph.params,
                         ...)
-      if(!is.na(groupvars[3])) {
+      if(!is.na(groupvars[4])) {
+        plot + facet_wrap(df.summary[[groupvars[3]]] ~ df.summary[[groupvars[4]]])
+      } else if (!is.na(groupvars[3])) {
         plot + facet_wrap(df.summary[[groupvars[3]]] ~ .)
       } else {
         plot
