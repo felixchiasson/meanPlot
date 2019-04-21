@@ -1,4 +1,3 @@
-#' @importFrom magrittr %>%
 #' @title Computes standard error and confidence intervals under various designs and sampling schemes
 #'
 #' @description Computes standard error and confidence interval under various designs and sampling schemes
@@ -6,19 +5,14 @@
 #' @param data Data frame
 #' @param bsfactor The name of your between-subject factor(s)
 #' @param wsfactor The name of your within-subject factor(s)
-#' @param x Only necessary if plot == TRUE. The name of the column containing
-#' your x.
-#' @param group.by Only necessary if plot == TRUE. The name of the column
-#' containing your grouping variable.
-#' @param wslevels The number of levels in your within-subject factor for all
-#' within subject factors. For multiple levels, list them in the same order as
-#' your wsfactor.
+#' @param factorOrder Order of factors as shown in the graph (x axis, groups, panels)
 #' @param measure Your dependent variable
 #' @param errorbar The content of your error bar. Can either be "CI" or "SE".
 #' Defaults to "SE"
 #' @param gamma Only necessary if errorbar == "CI". The confidence level.
+#' @param adjustments List of adjustments as described below
 #' @param popsize Size of the population under study if known. Defaults to Inf
-#' @param purpose The purpose of the comparisons. Defaults to "single"
+#' @param purpose The purpose of the comparisons. Defaults to "single". Options: single, difference
 #' @param decorrelation For repeated measure designs only.
 #' Chooses the decorrelation method ("CM" or "LM"). Defaults to "none".
 #' @param sep The separator used to separate dependent variables from within-subject factors in a wide data frame.
@@ -32,8 +26,8 @@
 #' @return NULL
 #'
 #' @examples
-#' meanPlot(ToothGrowth, bsfactor = "dose", wsfactor = "supp", measure = "len",
-#' x = "dose", group.by = "supp", statistic = "mean",
+#' meanPlot(ToothGrowth, bsfactor = c("dose", "supp"), measure = "len",
+#' statistic = "mean",
 #' xlab = xlab("Dose"), ylab = ylab("Tooth Growth"),
 #' theme = theme_bw())
 #'
@@ -42,11 +36,11 @@
 
 meanPlot <- function(data, ...,
                      bsfactor=NULL, wsfactor=NULL,
-                     x, group.by, wslevels = NULL,
-                     measure, statistic = "mean",
+                     factorOrder, measure,
+                     statistic = "mean",
                      errorbar = "SE", gamma,
-                     popsize = Inf, purpose = "single",
-                     decorrelation = "none",
+                     adjustments = list(purpose = "single", popsize = Inf,
+                                        decorrelation = "none"),
                      sep,
                      plot = TRUE, plot.type = "bar",
                      error.params = list(width = .8), graph.params = list()) {
@@ -54,13 +48,33 @@ meanPlot <- function(data, ...,
   # TODO(Felix): Adjustments for clusters, halved/pooled SEM.
   # TODO(Felix): Add exception handling
 
-  groupvars <- c(wsfactor, bsfactor)
+  # Set defaults if they are missing ####
 
-  # if ((!is.null(wsfactor) && is.null(wslevels)) || (is.null(wsfactor) && !is.null(wslevels))) {
-  #   stop("ERROR: Did you forget to specify wslevels or your wsfactor?")
-  # }
+  if(is.null(adjustments$purpose)) {
+    adjustments$purpose <- "single"
+  }
 
-  wslevels <- sum(wslevels)
+  if(is.null(adjustments$popsize)) {
+    adjustments$popsize <- Inf
+  }
+
+  if(is.null(adjustments$decorrelation)) {
+    adjustments$decorrelation <- "none"
+  }
+
+  if(!missing(factorOrder)) {
+    groupvars <- factorOrder
+  } else {
+    groupvars <- c(wsfactor, bsfactor)
+  }
+
+  ########################################
+
+  if (length(groupvars) > 4) {
+    stop("Too many factors. There can only be a total of 4 factors.")
+  }
+
+  wslevels <- length(grep(x = colnames(data), pattern = paste0("^", measure)))
 
 
   # Decorrelate data ----
@@ -75,41 +89,44 @@ meanPlot <- function(data, ...,
     df.z <-
       (sqrt(ncol(df.x) / (ncol(df.x) - 1))) *
       (t(df.y) - colMeans(df.y)) + colMeans(df.y)
-    df.z <- t(df.z) %>% as.data.frame()
+    df.z <- as.data.frame(t(df.z))
     return(df.z)
   }
 
   # We want to do this step for each group and only on columns with measures.
   # We use delim() to only select the data we need knowing the number of levels
   # in our repeated measures.
+  if (adjustments$decorrelation != "none") {
+    if (adjustments$decorrelation == "CM" || adjustments$decorrelation == "LM") {
 
-  if (decorrelation %in% c("CM", "LM")) {
+      if (!is.null(bsfactor)) {
+        df.wide <- split(data, data[[bsfactor]])
+        print("IT IS NOT NULL")
 
-    if (!is.null(bsfactor)) {
-      df.wide <- data %>% split(data[[bsfactor]])
-      print("IT IS NOT NULL")
+        for (i in 1:length(df.wide)) {
 
-      for (i in 1:length(df.wide)) {
+          df.part <- two_step_normalize(df.wide[[i]], wslevels)
+          delim   <- select_col(df.wide[[i]], wslevels)
+          df.wide[[i]][, delim:ncol(df.wide[[i]])] <- df.part
 
-        df.part <- two_step_normalize(df.wide[[i]], wslevels)
-        delim   <- select_col(df.wide[[i]], wslevels)
-        df.wide[[i]][, delim:ncol(df.wide[[i]])] <- df.part
+        }
+        # Once decorrelation is over, we merge both data frames together again.
+        df.wide <- unsplit(df.wide, as.factor(data[[bsfactor]]))
+
+      } else {
+        df.wide <- data
+
+        df.part <- two_step_normalize(df.wide, wslevels)
+        delim   <- select_col(data, wslevels)
+        df.wide[, delim:ncol(data)] <- df.part
 
       }
-      # Once decorrelation is over, we merge both data frames together again.
-      df.wide <- unsplit(df.wide, as.factor(data[[bsfactor]]))
+
+      df <- lsr::wideToLong(df.wide, within = wsfactor, sep = sep)
 
     } else {
-      df.wide <- data
-
-      df.part <- two_step_normalize(df.wide, wslevels)
-      delim   <- select_col(data, wslevels)
-      df.wide[, delim:ncol(data)] <- df.part
-
+      stop("Invalid decorrelation adjustment. Try 'none', 'CM', or 'LM'.")
     }
-
-    df <- lsr::wideToLong(df.wide, within = wsfactor, sep = sep)
-
   } else {
     if (!is.null(wsfactor) && !missing(sep)) {
       df <- lsr::wideToLong(data, within = wsfactor, sep = sep)
@@ -141,7 +158,7 @@ meanPlot <- function(data, ...,
 
 
 
-  if (decorrelation == "LM") {
+  if (adjustments$decorrelation == "LM") {
     df.summary$SE <- (1 / wslevels) * (df.summary$SE^2)
   }
 
@@ -150,22 +167,26 @@ meanPlot <- function(data, ...,
   # Adjust for population size. If population size is finite the SE should be
   # adjusted to take into account the population size.
 
-
-  if (popsize != Inf) {
+  if (is.character(adjustments$popsize)) {
+    stop("ERROR: popsize should be a number")
+  } else if (adjustments$popsize != Inf) {
     print("popSize Adjust")
-    df.summary[grepl(errorbar[1], names(df.summary))] <-
-      pop.adjust(df.summary, errorbar[1], popsize)
+    df.summary[grepl("error", names(df.summary))] <-
+      pop.adjust(df.summary, errorbar, adjustments$popsize)
   }
 
   # Adjust for purpose.
-
-  if (purpose == "diff" || decorrelation != "none") {
-    print("Purpose Adjust")
-    df.summary[grepl(errorbar[1], names(df.summary))] <-
-      purpose(df.summary, errorbar[1])
+  if (adjustments$purpose != "single") {
+    if (adjustments$purpose == "difference") {
+      print("Purpose Adjust")
+      df.summary[grepl("error", names(df.summary))] <-
+        purpose(df.summary, errorbar)
+    } else {
+      stop("Invalid purpose adjustment. Did you mean to write 'difference'?")
+    }
   }
 
-  print("df.summary")
+  print(df.summary)
   # End of Adjustments
 
 
@@ -173,41 +194,50 @@ meanPlot <- function(data, ...,
   # For this section we make use of the ggplot package. For each group, we plot
   # TODO: We need a case for grouping for between factors
 
-  # Using SEM
 
   if (plot == TRUE) {
 
     require(ggplot2)
 
-    if (missing(x)) {
-      stop("ERROR: Argument x missing. Cannot continue.")
-    }
+    if (is.null(df.summary$error2)) {
 
-    if (errorbar == "SE") {
+      plot <- make_plot(data = df.summary, type = plot.type,
+                        x = groupvars[1],
+                        y = "statistic",
+                        groups = switch(!is.na(groupvars[2]), groupvars[2], NULL),
+                        ymin = "statistic - error",
+                        ymax = "statistic + error",
+                        error.params = error.params,
+                        graph.params = graph.params,
+                        ...)
+      if(!is.na(groupvars[4])) {
+        plot + facet_grid(df.summary[[groupvars[3]]] ~ df.summary[[groupvars[4]]])
+      } else if (!is.na(groupvars[3])) {
+        plot + facet_grid(df.summary[[groupvars[3]]] ~ .)
+      } else {
+        plot
+      }
 
-      make_plot(data = df.summary, type = plot.type,
-                x = x,
-                y = "statistic",
-                groups = switch(!missing(group.by), group.by, NULL),
-                ymin = "statistic - SE",
-                ymax = "statistic + SE",
-                error.params = error.params,
-                graph.params = graph.params,
-                ...)
-
-    } else if (errorbar == "CI") {
-      make_plot(data = df.summary, type = plot.type,
-                x = x,
-                y = "statistic",
-                groups = switch(!missing(group.by), group.by, NULL),
-                ymin = "CI1",
-                ymax = "CI2",
-                error.params = error.params,
-                graph.params = graph.params,
-                ...)
     } else {
-      stop("ERROR: errorbar must be 'CI' or 'SE'. Stopping.")
+      plot <- make_plot(data = df.summary, type = plot.type,
+                        x = groupvars[1],
+                        y = "statistic",
+                        groups = switch(!is.na(groupvars[2]), groupvars[2], NULL),
+                        ymin = "error1",
+                        ymax = "error2",
+                        error.params = error.params,
+                        graph.params = graph.params,
+                        ...)
+      if(!is.na(groupvars[4])) {
+        plot + facet_grid(df.summary[[groupvars[3]]] ~ df.summary[[groupvars[4]]])
+      } else if (!is.na(groupvars[3])) {
+        plot + facet_grid(df.summary[[groupvars[3]]] ~ .)
+      } else {
+        plot
+      }
+
     }
+
   } else {
     return(df.summary)
   }

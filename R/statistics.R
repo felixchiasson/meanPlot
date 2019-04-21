@@ -19,13 +19,10 @@ make_summary <- function(df, groupvars, stats, width, measure, ...) {
                       .fun = function(xx, col) {
                         c(N = length(xx[[col]]),
                           statistic = do.call(stats, list(xx[[col]])),
-                          error.bar = do.call(wfct, list(xx[[col]], ...)))
+                          error = do.call(wfct, list(xx[[col]], ...)))
                       }
                       , measure)
 
-  # Some renaming
-
-  colnames(df.summary) <- sub("error.bar", width, colnames(df.summary))
   df.summary[groupvars] <- lapply(df.summary[groupvars], as.factor)
 
   df.summary
@@ -38,12 +35,12 @@ make_summary <- function(df, groupvars, stats, width, measure, ...) {
 ########################################################
 
 purpose <- function(x, width) {
-  (x[grepl(width, names(x))] - ifelse(width == "CI", x["statistic"], 0)) *
+  (x[grepl("error", names(x))] - ifelse(width == "CI", x["statistic"], 0)) *
     sqrt(2) + ifelse(width == "CI", x["statistic"], 0)
 }
 
 pop.adjust <- function(x, width, n) {
-  (x[grepl(width, names(x))] - ifelse(width == "CI", x["statistic"], 0)) *
+  (x[grepl("error", names(x))] - ifelse(width == "CI", x["statistic"], 0)) *
     sqrt(1 - x$N / n) + ifelse(width == "CI", x["statistic"], 0)
 }
 
