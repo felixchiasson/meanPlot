@@ -1,17 +1,17 @@
 #' @import ggplot2
+
 make_plot <- function(data, type, x, y, ymin, ymax, groups = NULL, error.params = list(),
                       graph.params = list(), ...) {
 
-  build_graph_options(
-    ggplot(data, aes_string(x, y, ymin = ymin, ymax = ymax, fill = groups)) +
-    build_bar_graph(graph.params, error.params, type = type),
-    ...)
+    Reduce(`+`, list(
+        ggplot(data, aes_string(x, y, ymin = ymin, ymax = ymax, fill = groups)) +
+        build_graph(graph.params, error.params, type = type),
+        ...)
+    )
 
 }
 
-build_bar_graph <- function(graph.params = list(), error.params = list(), type) {
-
-
+build_graph <- function(graph.params = list(), error.params = list(), type) {
 
   if (type == "bar") {
     plot.type <- do.call(geom_bar, modifyList(
@@ -38,6 +38,3 @@ build_bar_graph <- function(graph.params = list(), error.params = list(), type) 
 
 }
 
-build_graph_options <- function(...) {
-  Reduce(`+`, list(...))
-}
