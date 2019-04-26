@@ -97,8 +97,8 @@ meanPlot <- function(data,
     if (any(unlist(gregexpr("\\w\\((\\d+)\\)", wsFactor))== -1))
             stop("ERROR: One of the repeated-measure factor not properly formed 'name(nlevel)'. Exiting...")
     wsMissing <- "DummyWithinSubjectFactor"
+    wsLevels <- c(1)
     if (is.null(wsFactor)) {
-        wsLevels <- c(1)
         wsFactor <- wsMissing
     } else {
         for (i in 1:length(wsFactor)) {
@@ -106,6 +106,7 @@ meanPlot <- function(data,
             wsFactor[i] <-            unlist(strsplit(wsFactor[i], '[()]'))[1]
         }
     }
+
     wslevel <- prod(wsLevels)
     if (!(length(measure) == wslevel)) 
             stop("ERROR: The number of levels of the within-subject level(s) does not match the number of measure. Exiting...")
@@ -164,11 +165,11 @@ meanPlot <- function(data,
     data.wide <- data
     # We do this step for each group and only on columns with repeated measures.
     if (adjustments$decorrelation == "CM" || adjustments$decorrelation == "LM") {
-        data.wide <- plyr::ddply(data, .fun = two_step_transform, .variables= bsFactor, measure)    
+        data.wide <- plyr::ddply(data.wide, .fun = two_step_transform, .variables= bsFactor, measure)    
     }
     # is LM (pooled standard error) needed?
     if (adjustments$decorrelation == "LM") {
-        data.wide <- plyr::ddply(data, .fun = pool_sd_transform, .variables= bsFactor, measure) 
+        data.wide <- plyr::ddply(data.wide, .fun = pool_sd_transform, .variables= bsFactor, measure) 
     }
 
     runDebug(Debug, "End of Step 2: Data post decorrelation", 
@@ -187,7 +188,7 @@ meanPlot <- function(data,
     data.long <- suppressWarnings(lsr::wideToLong(data.wide, within = wsFactor, sep = weird))
 
     # if there was no within-subject factor, a dummy had been added
-    if (wsFactor == wsMissing) {
+    if (wsFactor[1]  == wsMissing) {
         # removing all traces of the dummy
         data.long[[wsMissing]] = NULL # remove the column 
         wsFactor = NULL # remove the dummy factor
@@ -203,13 +204,14 @@ meanPlot <- function(data,
     ##############################################################################
 
     aggregatefct <- function(subsetOfData) { 
+        params1 <- list( subsetOfData$DV  )
         if (is.gamma.required(widthfct)) {
-            params <- list( subsetOfData$DV, gamma = gamma )
+            paramsV <- list( subsetOfData$DV, gamma = gamma )
         } else {
-            params <- list( subsetOfData$DV  )
+            paramsV <- list( subsetOfData$DV  )
         }
-        center <- do.call(statistic, params)
-        limits <- do.call(widthfct, params)
+        center <- do.call(statistic, params1)
+        limits <- do.call(widthfct, paramsV)
         if (is.interval.function(widthfct)) {
             lowerwidth <- ( min(limits) - center)
             upperwidth <- ( max(limits) - center ) 
@@ -234,7 +236,7 @@ meanPlot <- function(data,
     # 5.1: Adjust for population size if not infinite 
     nadj <- if (adjustments$popSize != Inf) {
         # Ns the number of subjects per group
-        Ns <- plyr::ddply(data.long2, .fun=length, .variables = factorOrder )$V1
+        Ns <- plyr::ddply(data, .fun=dim, .variables = bsFactor )$V1
         sqrt(1 - Ns / adjustments$popSize )
     } else {1}
 
@@ -242,12 +244,12 @@ meanPlot <- function(data,
     padj <- if (adjustments$purpose == "difference") {sqrt(2) } else {1}
     
     # 5.3: Adjust for cluster-randomized sampling
-    sadj <- if (adjustments$purpose == "CRS") {
+    sadj <- if (adjustments$samplingScheme == "CRS") {
         #### TODO
     } else {1}
 
     # 5.4: Adjust for correlation if decorrelation == "CA"
-    radj <- if (adjustments$purpose == "CA") {
+    radj <- if (adjustments$decorrelation == "CA") {
         #### TODO
     } else {1}
 
@@ -356,7 +358,7 @@ pool_sd_transform <- function(dta, measure) {
     # from Cousineau, in prep.
     Z   <- dta[ measure ]
     sds <- colSDs(Z)
-    sdp <- sqrt(sum(sds^2))
+    sdp <- sqrt(mean(sds^2))
     W   <- sdp / sds * (t(Z) - colMeans(Z)) + colMeans(Z)
     W <- as.data.frame(t(W))
     dta [ measure ] = W

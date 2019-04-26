@@ -211,7 +211,7 @@ fisherkurtosis <- function(x) {
 }
 SE.fisherkurtosis <- function(x){
   n    <- length(x)
-  se   <- 2 * SE.sk(x) * sqrt( (n^2 - 1) / ((n - 3) * (n + 5)) )
+  se   <- 2 * SE.fisherskew(x) * sqrt( (n^2 - 1) / ((n - 3) * (n + 5)) )
   se
 }
 CI.fisherkurtosis <- function(x, gamma = 0.95){
