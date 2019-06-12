@@ -1,0 +1,11 @@
+bibentry(bibtype = "Manual",
+         title = "{meanPlot}: Making plots with correct errror bars",
+         author = c(person("Felix", "Chiasson"),
+                    person("Denis", "Cousineau")
+                   ),
+         year = 2019,
+         version = 0.85,
+         note = "R package",
+         url = "https://github.com/felixchiasson/meanPlot"
+)
+         

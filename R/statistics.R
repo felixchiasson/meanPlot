@@ -1,49 +1,10 @@
-#' @title Summarize data
-#'
-#' @description Summarizes data using summary statistic of choice and returns a data frame sorted by group.
-#'
-#' @param df Data Frame
-#' @param groupvars Name of the column(s) containing your bsfactor and wsfactor
-#' @param stats Summary Statistic to use, see documentation for a list.
-#' @param width Type of error bar ("SE" or "CI")
-#' @param measure The name of the column containing your dependent variable
-#'
-#' @return data.frame
-#'
-#' @examples make_summary(ToothGrowth, groupvars = c("supp", "dose"), stats = "mean", width = "CI", measure = "len")
-
-make_summary <- function(df, groupvars, stats, width, measure, ...) {
-
-  wfct <- paste(width, stats, sep = ".")
-  df.summary <- plyr::ddply(df, groupvars,
-                      .fun = function(xx, col) {
-                        c(N = length(xx[[col]]),
-                          statistic = do.call(stats, list(xx[[col]])),
-                          error = do.call(wfct, list(xx[[col]], ...)))
-                      }
-                      , measure)
-
-  df.summary[groupvars] <- lapply(df.summary[groupvars], as.factor)
-
-  df.summary
-
-
-}
-
 ########################################################
-###################### Adjustments #####################
+# Standard errors and confidence intervals for many
+# descriptive statistics.
+# See Harding, Tremblay, & Cousineau (2014,2015), 
+#   The Quantitative Methods for Psychology.
+# for a review.
 ########################################################
-
-purpose <- function(x, width) {
-  (x[grepl("error", names(x))] - ifelse(width == "CI", x["statistic"], 0)) *
-    sqrt(2) + ifelse(width == "CI", x["statistic"], 0)
-}
-
-pop.adjust <- function(x, width, n) {
-  (x[grepl("error", names(x))] - ifelse(width == "CI", x["statistic"], 0)) *
-    sqrt(1 - x$N / n) + ifelse(width == "CI", x["statistic"], 0)
-}
-
 
 ########################################################
 ################## CENTRAL TENDENCIES ##################
@@ -63,7 +24,6 @@ CI.mean <- function(x, gamma = 0.95){
   ci <- mean(x) + se * tc
   ci
 }
-
 
 
 ######################## MEDIAN ########################
@@ -156,26 +116,28 @@ CI.sd <- function(x, gamma = 0.95){
 
 
 ################### MEDIAN DEVIATION ###################
-mad <- function(x) {
+# note that mad is already part of R with a slightly different definition
+MAD <- function(x) {
   median(abs(x-median(x)))
 }
-SE.mad <- function(x){
+SE.MAD <- function(x){
   sdx  <- sd(x)
   n    <- length(x)
   se   <- sqrt(2/pi) * sdx / sqrt(n)
   se
 }
-CI.mad <- function(x, gamma = 0.95){
-  se <- SE.mad(x)
+CI.MAD <- function(x, gamma = 0.95){
+  se <- SE.MAD(x)
   n  <- length(x)
   tc <- qt(c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
-  ci <- mad(x) + se * tc
+  ci <- MAD(x) + se * tc
   ci
 }
 
 
 ####################### QUANTILE #######################
-# quantile function may not work...
+# quantile function does not work...
+
 
 ################## INTERQUARTILE RANGE##################
 SE.IQR <- function(x){
@@ -194,71 +156,69 @@ CI.IQR <- function(x, gamma = 0.95){
 }
 
 
-
 ########################################################
 ################### SHAPE DESCRIPTION ##################
 ########################################################
 
-####################### SKEWNESSu ######################
+####################### fisherskew ######################
 # this is Fisher skew for small sample
-sk <- function(x) {
+fisherskew <- function(x) {
   vrx <- var(x)
   n   <- length(x)
   skbias <- (1/n) * (sum((x - mean(x))^3)) / ((n-1)/n * vrx)^(3/2)
   sqrt(n * (n-1)) / (n-2) * skbias
 }
-SE.sk <- function(x){
+SE.fisherskew <- function(x){
   n    <- length(x)
   se   <- sqrt( (6 * n * (n - 1)) / ((n - 2) * (n + 1)*(n + 3)) )
   se
 }
-CI.sk <- function(x, gamma = 0.95){
-  se <- SE.sk(x)
+CI.fisherskew <- function(x, gamma = 0.95){
+  se <- SE.fisherskew(x)
   zc <- qnorm(c(1/2 - gamma/2, 1/2 + gamma/2))
-  ci <- sk(x) + se * zc
+  ci <- fisherskew(x) + se * zc
   ci
 }
 
 
-
-###################### SKEWNESSp #####################
+###################### pearsonskew #####################
 # this is pearson skew
-pearsk <- function(x) {
+pearsonskew <- function(x) {
   sdx <- sd(x)
   (mean(x) - median(x)) / sdx
 }
-SE.pearsk <- function(x){
+SE.pearsonskew <- function(x){
   n    <- length(x)
   se   <- sqrt( (pi/2 - 1) / n )
   se
 }
-CI.pearsk <- function(x, gamma = 0.95){
-  se <- SE.pearsk(x)
+CI.pearsonskew <- function(x, gamma = 0.95){
+  se <- SE.pearsonskew(x)
   n  <- length(x)
   tc <- qt(c(1/2 - gamma/2, 1/2 + gamma/2), n-1)
-  ci <- pearsk(x) + se * tc
+  ci <- pearsonskew(x) + se * tc
   ci
 }
 
 
-####################### KURTOSISu ######################
-# this is kurtosis for small sample
-ku <- function(x) {
+####################### fisherkurtosis ######################
+# this is fisher kurtosis for small sample
+fisherkurtosis <- function(x) {
   vrx <- var(x)
   n   <- length(x)
   kubias <- (1/n) * (sum((x - mean(x))^4)) / ((n - 1)/n * vrx)^(4/2)
   (n+1) / ((n - 2) * (n - 3)) * ((n + 1) * (kubias - 3) + 6)
 }
-SE.ku <- function(x){
+SE.fisherkurtosis <- function(x){
   n    <- length(x)
-  se   <- 2 * SE.sk(x) * sqrt( (n^2 - 1) / ((n - 3) * (n + 5)) )
+  se   <- 2 * SE.fisherskew(x) * sqrt( (n^2 - 1) / ((n - 3) * (n + 5)) )
   se
 }
-CI.ku <- function(x, gamma = 0.95){
+CI.fisherkurtosis <- function(x, gamma = 0.95){
   n    <- length(x)
   minbx <- 2 * (n - 1) / (n - 3)
-  se <- SE.ku(x)
+  se <- SE.fisherkurtosis(x)
   lnc <- qlnorm( c(1/2 - gamma/2, 1/2 + gamma/2) )
-  ci <- ku(x) + 2 * lnc ^ (se / 2) - minbx
+  ci <- fisherkurtosis(x) + 2 * lnc ^ (se / 2) - minbx
   ci
 }
